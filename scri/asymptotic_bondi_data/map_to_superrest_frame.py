@@ -415,8 +415,14 @@ def rotation_from_spin_charge(chi, t):
         Time array corresponding to the size of the spin vector.
     """
     chi_f = quaternion.quaternion(*chi[np.argmin(abs(t))]).normalized()
-    q = (1 - chi_f * quaternion.z).normalized().components
-    return scri.bms_transformations.BMSTransformation(frame_rotation=q)
+    q = (1 - chi_f * quaternion.z).normalized()
+
+    # preserve the x-axis
+    x_rotated = quaternion.as_vector_part(q.inverse() * quaternion.x * q)
+    phase = np.angle(x_rotated[0] + 1j*x_rotated[1])
+    q = q * quaternion.from_rotation_vector(phase * np.array([0, 0, 1]))
+    
+    return scri.bms_transformations.BMSTransformation(frame_rotation=q.components)
 
 
 def rotation_from_vectors(vector, target_vector, t=None):
